@@ -1,12 +1,15 @@
 package com.nick;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class STPMain {
 
-    public static void main(String[] args) {
+    private final static String filePath = "src/com/nick/input/STP_in_5.txt";
+
+    public static void main(String[] args)  {
 
         STPService service = new STPService();
         //case 1
@@ -19,18 +22,21 @@ public class STPMain {
 
 
         //case 2
-        Switch s = new Switch(50, 32768);
-        System.out.println(s);
+//        Switch s = new Switch(50, 32768);
+//        System.out.println(s);
+//
+//        List<BDPU> bdpus = new LinkedList<>();
+//        bdpus.add(new BDPU(30, 4096, 30, 4096, 0, 100));
+//        bdpus.add(new BDPU(1, 32768, 30, 4096, 12, 1000));
+//        bdpus.add(new BDPU(5, 32768, 4, 32768, 19, 1000));
+//        bdpus.add(new BDPU(4, 32768, 4, 32768, 0, 1000));
+//        bdpus.add(new BDPU(30, 4096, 20, 4096, 4, 100));
+//        bdpus.add(new BDPU(19, 8192, 20, 4096, 4, 1000));
+//        bdpus.add(new BDPU(18, 8192, 20, 4096, 4, 1000));
 
-        List<BDPU> bdpus = new LinkedList<>();
-        bdpus.add(new BDPU(30, 4096, 30, 4096, 0, 100));
-        bdpus.add(new BDPU(1, 32768, 30, 4096, 12, 1000));
-        bdpus.add(new BDPU(5, 32768, 4, 32768, 19, 1000));
-        bdpus.add(new BDPU(4, 32768, 4, 32768, 0, 1000));
-        bdpus.add(new BDPU(30, 4096, 20, 4096, 4, 100));
-        bdpus.add(new BDPU(19, 8192, 20, 4096, 4, 1000));
-        bdpus.add(new BDPU(18, 8192, 20, 4096, 4, 1000));
-
+        Switch s = getSwitch();
+        System.out.println(s.getDetail());
+        List<BDPU> bdpus = getBDPUs();
 
         s.sayHello();
         service.calcBDPUCost(bdpus);
@@ -39,10 +45,59 @@ public class STPMain {
             s.received(b);
         }
 
+        System.out.println("==========");
         System.out.println(s.getDetail());
+        System.out.println("==========");
     }
 
 
+    public static Switch getSwitch()  {
+
+        Switch s = null;
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(filePath));
+
+             s = new Switch(Integer.parseInt(br.readLine()), Integer.parseInt(br.readLine()));
+
+            br.close();
+            return s;
+        }
+        catch(Exception e){
+            System.err.println("Error: Target File Cannot Be Read");
+        }
+
+        return s;
+    }
+
+
+    public static List<BDPU> getBDPUs()  {
+
+        List<BDPU> bdpus = new LinkedList<>();
+        try{
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+
+            br.readLine();
+            br.readLine();
+
+            String n = br.readLine();
+
+            for (String line = br.readLine(); line != null; line = br.readLine()) {
+                bdpus.add(new BDPU(Integer.parseInt(line),
+                        Integer.parseInt(br.readLine()),
+                        Integer.parseInt(br.readLine()),
+                        Integer.parseInt(br.readLine()),
+                        Integer.parseInt(br.readLine()),
+                        Integer.parseInt(br.readLine())));
+            }
+
+            br.close();
+        }
+        catch(Exception e){
+            System.err.println("Error: Target File Cannot Be Read");
+        }
+
+        return bdpus;
+    }
 
     public static class STPService {
         private final Map<Integer, Integer> bandwidthToCostMaps = Stream.of(new Integer[][]{
@@ -94,34 +149,6 @@ public class STPMain {
             return id;
         }
 
-        public Integer getPriority() {
-            return priority;
-        }
-
-        public Integer getRootId() {
-            return rootId;
-        }
-
-        public void setRootId(Integer rootId) {
-            this.rootId = rootId;
-        }
-
-        public Integer getRootPriority() {
-            return rootPriority;
-        }
-
-        public void setRootPriority(Integer rootPriority) {
-            this.rootPriority = rootPriority;
-        }
-
-        public Integer getRootPortTo() {
-            return rootPortTo;
-        }
-
-        public void setRootPortTo(Integer rootPortTo) {
-            this.rootPortTo = rootPortTo;
-        }
-
         public Integer getCost() {
             return cost;
         }
@@ -136,9 +163,24 @@ public class STPMain {
 
 
         public void received(BDPU bdpu){
+
+            //處理相等的情況
+            if (bdpu.rootPriority.equals(this.rootPriority) && Objects.equals(bdpu.rootId, this.rootId)) {
+
+                if (bdpu.getTotalCost() < this.cost) {
+                    this.rootPortTo = bdpu.id;
+                    this.cost = bdpu.getTotalCost();
+                    System.out.println("NewCost:"+bdpu.getTotalCost()+", Hello");
+                }
+                else {
+                    System.out.println("Ignore");
+                }
+
+                return;
+            }
+
             if (bdpu.rootPriority < this.rootPriority
-            || (bdpu.rootPriority.equals(this.rootPriority) && bdpu.rootId < this.id)) {
-                //update Info
+            || (bdpu.rootPriority.equals(this.rootPriority) && bdpu.rootId < this.rootId)) {
 
                 this.rootId = bdpu.rootId;
                 this.rootPriority = bdpu.rootPriority;
@@ -147,10 +189,10 @@ public class STPMain {
 
                 System.out.println("NewCost:"+bdpu.getTotalCost()+", Hello");
 
-
-            }else {
-                System.out.println("Ignore");
+                return;
             }
+
+            System.out.println("Ignore");
         }
 
         public String getDetail() {

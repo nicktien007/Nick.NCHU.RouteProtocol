@@ -7,38 +7,45 @@ import java.util.stream.Stream;
 
 public class STPMain {
 
-    private final static String filePath = "src/com/nick/input/STP_in_5.txt";
+    private final static String filePath = "src/com/nick/input/STP_in_4.txt";
 
     public static void main(String[] args)  {
 
-        STPService service = new STPService();
         //case 1
-//        Switch s = new Switch(50, 32768);
-//        System.out.println(s);
-//
-//        List<BDPU> bdpus = new LinkedList<>();
-//        bdpus.add(new BDPU(30, 32768, 18, 4096, 4, 100));
-//        bdpus.add(new BDPU(1, 32768, 11, 8192, 4, 1000));
-
+        //testCase1();
 
         //case 2
-//        Switch s = new Switch(50, 32768);
-//        System.out.println(s);
-//
-//        List<BDPU> bdpus = new LinkedList<>();
-//        bdpus.add(new BDPU(30, 4096, 30, 4096, 0, 100));
-//        bdpus.add(new BDPU(1, 32768, 30, 4096, 12, 1000));
-//        bdpus.add(new BDPU(5, 32768, 4, 32768, 19, 1000));
-//        bdpus.add(new BDPU(4, 32768, 4, 32768, 0, 1000));
-//        bdpus.add(new BDPU(30, 4096, 20, 4096, 4, 100));
-//        bdpus.add(new BDPU(19, 8192, 20, 4096, 4, 1000));
-//        bdpus.add(new BDPU(18, 8192, 20, 4096, 4, 1000));
+        //testCase2();
+
 
         Switch s = getSwitch();
-        System.out.println(s.getDetail());
         List<BDPU> bdpus = getBDPUs();
+        System.out.println(s.getDetail());
 
         s.sayHello();
+        STPService service = new STPService();
+
+        service.calcBDPUCost(bdpus);
+
+        bdpus.forEach(s::received);
+
+        System.out.println("==========");
+        System.out.println(s.getDetail());
+        System.out.println("==========");
+    }
+
+    public static void testCase1(){
+        //case 1
+        Switch s = new Switch(50, 32768);
+        System.out.println(s);
+
+        List<BDPU> bdpus = new LinkedList<>();
+        bdpus.add(new BDPU(30, 32768, 18, 4096, 4, 100));
+        bdpus.add(new BDPU(1, 32768, 11, 8192, 4, 1000));
+
+        s.sayHello();
+
+        STPService service = new STPService();
         service.calcBDPUCost(bdpus);
 
         for (BDPU b : bdpus){
@@ -50,6 +57,33 @@ public class STPMain {
         System.out.println("==========");
     }
 
+    public static void testCase2(){
+        //case 2
+        Switch s = new Switch(50, 32768);
+        System.out.println(s);
+
+        List<BDPU> bdpus = new LinkedList<>();
+        bdpus.add(new BDPU(30, 4096, 30, 4096, 0, 100));
+        bdpus.add(new BDPU(1, 32768, 30, 4096, 12, 1000));
+        bdpus.add(new BDPU(5, 32768, 4, 32768, 19, 1000));
+        bdpus.add(new BDPU(4, 32768, 4, 32768, 0, 1000));
+        bdpus.add(new BDPU(30, 4096, 20, 4096, 4, 100));
+        bdpus.add(new BDPU(19, 8192, 20, 4096, 4, 1000));
+        bdpus.add(new BDPU(18, 8192, 20, 4096, 4, 1000));
+
+        s.sayHello();
+
+        STPService service = new STPService();
+        service.calcBDPUCost(bdpus);
+
+        for (BDPU b : bdpus){
+            s.received(b);
+        }
+
+        System.out.println("==========");
+        System.out.println(s.getDetail());
+        System.out.println("==========");
+    }
 
     public static Switch getSwitch()  {
 

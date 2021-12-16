@@ -7,8 +7,14 @@ import java.util.stream.Stream;
 
 public class STPMain {
 
-    private final static String filePath = "src/com/nick/input/STP_in_4.txt";
-    private static StringBuilder fileContent = new StringBuilder();
+    private final static Map<String, String> filePaths = Stream.of(new String[][]{
+            {"src/com/nick/input/STP_in_1.txt", "src/com/nick/output/STP_out_1.txt"},
+            {"src/com/nick/input/STP_in_2.txt", "src/com/nick/output/STP_out_2.txt"},
+            {"src/com/nick/input/STP_in_3.txt", "src/com/nick/output/STP_out_3.txt"},
+            {"src/com/nick/input/STP_in_4.txt", "src/com/nick/output/STP_out_4.txt"},
+            {"src/com/nick/input/STP_in_5.txt", "src/com/nick/output/STP_out_5.txt"},
+    }).collect(Collectors.toMap(d -> d[0], d -> d[1]));
+    private static final StringBuilder fileContent = new StringBuilder();
 
     public static void main(String[] args)  {
 
@@ -18,22 +24,23 @@ public class STPMain {
         //case 2
         //testCase2();
 
+        filePaths.forEach((k, v) -> {
+            Switch s = getSwitch(k);
+            List<BDPU> bdpus = getBDPUs(k);
 
-        Switch s = getSwitch();
-        List<BDPU> bdpus = getBDPUs();
+            s.sayHello();
 
-        s.sayHello();
-        STPService service = new STPService();
+            BDPUService bdpuService = new BDPUService();
+            bdpuService.calcBDPUCost(bdpus);
 
-        service.calcBDPUCost(bdpus);
+            bdpus.forEach(s::received);
 
-        bdpus.forEach(s::received);
+            printAndWriteContent("==========");
+            printAndWriteContent(s.getDetail());
+            printAndWriteContent("==========");
 
-        printAndWriteContent("==========");
-        printAndWriteContent(s.getDetail());
-        printAndWriteContent("==========");
-
-        writeFile();
+            writeFile(v);
+        });
     }
 
     private static void printAndWriteContent(String s){
@@ -41,8 +48,8 @@ public class STPMain {
         fileContent.append(s).append("\n");
     }
 
-    private static void writeFile(){
-        try (FileWriter writer = new FileWriter("src/com/nick/output/test.txt");
+    private static void writeFile(String fileName){
+        try (FileWriter writer = new FileWriter(fileName);
              BufferedWriter bw = new BufferedWriter(writer)) {
 
             bw.write(fileContent.toString());
@@ -64,7 +71,7 @@ public class STPMain {
 
         s.sayHello();
 
-        STPService service = new STPService();
+        BDPUService service = new BDPUService();
         service.calcBDPUCost(bdpus);
 
         for (BDPU b : bdpus){
@@ -91,7 +98,7 @@ public class STPMain {
 
         s.sayHello();
 
-        STPService service = new STPService();
+        BDPUService service = new BDPUService();
         service.calcBDPUCost(bdpus);
 
         for (BDPU b : bdpus){
@@ -103,7 +110,7 @@ public class STPMain {
         printAndWriteContent("==========");
     }
 
-    public static Switch getSwitch()  {
+    public static Switch getSwitch(String filePath)  {
 
         Switch s = null;
         try{
@@ -122,7 +129,7 @@ public class STPMain {
     }
 
 
-    public static List<BDPU> getBDPUs()  {
+    public static List<BDPU> getBDPUs(String filePath)  {
 
         List<BDPU> bdpus = new LinkedList<>();
         try{
@@ -151,7 +158,7 @@ public class STPMain {
         return bdpus;
     }
 
-    public static class STPService {
+    public static class BDPUService {
         private final Map<Integer, Integer> bandwidthToCostMaps = Stream.of(new Integer[][]{
                 {4, 250},
                 {10, 100},
@@ -161,7 +168,7 @@ public class STPMain {
                 {155, 14},
                 {1000, 4},
                 {10000, 2},
-        }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
+        }).collect(Collectors.toMap(d -> d[0], d -> d[1]));
 
 
         public void calcBDPUCost(List<BDPU> bdpus) {

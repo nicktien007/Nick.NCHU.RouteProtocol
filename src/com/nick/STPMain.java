@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 public class STPMain {
 
     private final static String filePath = "src/com/nick/input/STP_in_4.txt";
+    private static StringBuilder fileContent = new StringBuilder();
 
     public static void main(String[] args)  {
 
@@ -20,7 +21,6 @@ public class STPMain {
 
         Switch s = getSwitch();
         List<BDPU> bdpus = getBDPUs();
-        System.out.println(s.getDetail());
 
         s.sayHello();
         STPService service = new STPService();
@@ -29,15 +29,34 @@ public class STPMain {
 
         bdpus.forEach(s::received);
 
-        System.out.println("==========");
-        System.out.println(s.getDetail());
-        System.out.println("==========");
+        printAndWriteContent("==========");
+        printAndWriteContent(s.getDetail());
+        printAndWriteContent("==========");
+
+        writeFile();
+    }
+
+    private static void printAndWriteContent(String s){
+        System.out.println(s);
+        fileContent.append(s).append("\n");
+    }
+
+    private static void writeFile(){
+        try (FileWriter writer = new FileWriter("src/com/nick/output/test.txt");
+             BufferedWriter bw = new BufferedWriter(writer)) {
+
+            bw.write(fileContent.toString());
+
+        } catch (IOException e) {
+            System.err.format("IOException: %s%n", e);
+        }
+
+        fileContent.delete(0, fileContent.length());
     }
 
     public static void testCase1(){
         //case 1
         Switch s = new Switch(50, 32768);
-        System.out.println(s);
 
         List<BDPU> bdpus = new LinkedList<>();
         bdpus.add(new BDPU(30, 32768, 18, 4096, 4, 100));
@@ -52,15 +71,14 @@ public class STPMain {
             s.received(b);
         }
 
-        System.out.println("==========");
-        System.out.println(s.getDetail());
-        System.out.println("==========");
+        printAndWriteContent("==========");
+        printAndWriteContent(s.getDetail());
+        printAndWriteContent("==========");
     }
 
     public static void testCase2(){
         //case 2
         Switch s = new Switch(50, 32768);
-        System.out.println(s);
 
         List<BDPU> bdpus = new LinkedList<>();
         bdpus.add(new BDPU(30, 4096, 30, 4096, 0, 100));
@@ -80,9 +98,9 @@ public class STPMain {
             s.received(b);
         }
 
-        System.out.println("==========");
-        System.out.println(s.getDetail());
-        System.out.println("==========");
+        printAndWriteContent("==========");
+        printAndWriteContent(s.getDetail());
+        printAndWriteContent("==========");
     }
 
     public static Switch getSwitch()  {
@@ -192,7 +210,7 @@ public class STPMain {
         }
 
         public void sayHello(){
-            System.out.println("Hello");
+            printAndWriteContent("Hello");
         }
 
 
@@ -204,10 +222,10 @@ public class STPMain {
                 if (bdpu.getTotalCost() < this.cost) {
                     this.rootPortTo = bdpu.id;
                     this.cost = bdpu.getTotalCost();
-                    System.out.println("NewCost:"+bdpu.getTotalCost()+", Hello");
+                    printAndWriteContent("NewCost:" + bdpu.getTotalCost() + ", Hello");
                 }
                 else {
-                    System.out.println("Ignore");
+                    printAndWriteContent("Ignore");
                 }
 
                 return;
@@ -221,23 +239,21 @@ public class STPMain {
                 this.rootPortTo = bdpu.id;
                 this.cost = bdpu.getTotalCost();
 
-                System.out.println("NewCost:"+bdpu.getTotalCost()+", Hello");
+                printAndWriteContent("NewCost:"+bdpu.getTotalCost()+", Hello");
 
                 return;
             }
 
-            System.out.println("Ignore");
+            printAndWriteContent("Ignore");
         }
 
         public String getDetail() {
-            return "Switch{" +
-                    "id=" + id +
-                    ", priority=" + priority +
-                    ", rootId=" + rootId +
-                    ", rootPriority=" + rootPriority +
-                    ", rootPortTo=" + rootPortTo +
-                    ", cost=" + cost +
-                    '}';
+            return "ID:" + id + "\n" +
+                    "Priority:" + priority + "\n" +
+                    "RootID:" + rootId + "\n" +
+                    "RootPriority:" + rootPriority + "\n" +
+                    "RootPortTo:" + rootPortTo + "\n" +
+                    "Cost:" + cost;
         }
     }
 

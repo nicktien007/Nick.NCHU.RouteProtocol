@@ -74,9 +74,7 @@ public class STPMain {
         BDPUService service = new BDPUService();
         service.calcBDPUCost(bdpus);
 
-        for (BDPU b : bdpus){
-            s.received(b);
-        }
+        bdpus.forEach(s::received);
 
         printAndWriteContent("==========");
         printAndWriteContent(s.getDetail());
@@ -101,9 +99,7 @@ public class STPMain {
         BDPUService service = new BDPUService();
         service.calcBDPUCost(bdpus);
 
-        for (BDPU b : bdpus){
-            s.received(b);
-        }
+        bdpus.forEach(s::received);
 
         printAndWriteContent("==========");
         printAndWriteContent(s.getDetail());

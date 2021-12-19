@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class OSPF_testMain {
+public class OSPFMain_test1 {
 
     public static void main(String[] args) {
 

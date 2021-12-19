@@ -23,7 +23,7 @@ public class OSPFMain {
             List<Node> nodes = nodesAndSwitchId.getNodes();
             List<Integer> neighborIds = nodesAndSwitchId.getNeighborIds();
 
-            GraphD g = new GraphD();
+            Graph g = new Graph();
             nodes.forEach(node -> {
 
                 List<Vertex> vx= new ArrayList<>();
@@ -224,12 +224,12 @@ class Vertex implements Comparable<Vertex> {
 
 }
 
-class GraphD {
+class Graph {
 
     private final Map<String, List<Vertex>> vertices;
 
-    public GraphD() {
-        this.vertices = new HashMap<String, List<Vertex>>();
+    public Graph() {
+        this.vertices = new HashMap<>();
     }
 
     public void addVertex(String character, List<Vertex> vertex) {

@@ -6,7 +6,7 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 
 public class Dijkstra {
-    private static final Graph.Edge[] GRAPH = {
+    private static final GraphTest2.Edge[] GRAPH = {
               //case 1
 //            new Graph.Edge("5", "3", 300),
 //            new Graph.Edge("5", "4", 150),
@@ -32,36 +32,36 @@ public class Dijkstra {
 //            new Graph.Edge("4", "7", 25),
 
             //case 2
-            new Graph.Edge("9", "7", 12),
-            new Graph.Edge("9", "13", 1),
+            new GraphTest2.Edge("9", "7", 12),
+            new GraphTest2.Edge("9", "13", 1),
 
 
-            new Graph.Edge("8", "5", 13),
-            new Graph.Edge("8", "7", 4),
-            new Graph.Edge("8", "13", 3),
-            new Graph.Edge("8", "30", 15),
+            new GraphTest2.Edge("8", "5", 13),
+            new GraphTest2.Edge("8", "7", 4),
+            new GraphTest2.Edge("8", "13", 3),
+            new GraphTest2.Edge("8", "30", 15),
 
-            new Graph.Edge("5", "7", 5),
-            new Graph.Edge("5", "8", 13),
-            new Graph.Edge("5", "30", 4),
+            new GraphTest2.Edge("5", "7", 5),
+            new GraphTest2.Edge("5", "8", 13),
+            new GraphTest2.Edge("5", "30", 4),
 
-            new Graph.Edge("13", "7", 9),
-            new Graph.Edge("13", "8", 3),
-            new Graph.Edge("13", "9", 1),
+            new GraphTest2.Edge("13", "7", 9),
+            new GraphTest2.Edge("13", "8", 3),
+            new GraphTest2.Edge("13", "9", 1),
 
-            new Graph.Edge("30", "5", 4),
-            new Graph.Edge("30", "8", 15),
+            new GraphTest2.Edge("30", "5", 4),
+            new GraphTest2.Edge("30", "8", 15),
 
-            new Graph.Edge("7", "5", 5),
-            new Graph.Edge("7", "8", 4),
-            new Graph.Edge("7", "9", 12),
-            new Graph.Edge("7", "13", 9),
+            new GraphTest2.Edge("7", "5", 5),
+            new GraphTest2.Edge("7", "8", 4),
+            new GraphTest2.Edge("7", "9", 12),
+            new GraphTest2.Edge("7", "13", 9),
     };
     private static final String START = "9";
     private static final String END = "30";
 
     public static void main(String[] args) {
-        Graph g = new Graph(GRAPH);
+        GraphTest2 g = new GraphTest2(GRAPH);
         g.dijkstra(START);
         g.printPath(END);
 //        System.out.println("=======");
@@ -73,7 +73,7 @@ public class Dijkstra {
 /**
  * ref : https://stackoverflow.com/questions/37566922/dijkstras-algorithm-finding-all-possible-shortest-paths
  */
-class Graph {
+class GraphTest2 {
     private final Map<String, Vertex>
             graph; // mapping of vertex names to Vertex objects, built from a set of Edges
 
@@ -117,7 +117,7 @@ class Graph {
     }
 
     /** Builds a graph from a set of edges */
-    public Graph(Edge[] edges) {
+    public GraphTest2(Edge[] edges) {
         graph = new HashMap<>(edges.length);
 
         //one pass to find all vertices

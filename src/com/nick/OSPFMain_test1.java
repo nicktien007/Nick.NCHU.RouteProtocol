@@ -1,9 +1,6 @@
 package com.nick;
 
-import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class OSPFMain_test1 {
 
@@ -107,7 +104,7 @@ public class OSPFMain_test1 {
 //        };
 
 
-        graph di = new graph(graph, weight);
+        graphTest di = new graphTest(graph, weight);
 
         Integer from = 2;
         Integer to = 6;
@@ -123,12 +120,12 @@ public class OSPFMain_test1 {
         System.out.println(di.getCostFrom(from,to));
     }
 
-    public static class graph {
+    public static class graphTest {
         private int[][] G;
         private int[][] W;
         private vertex[] Map;
 
-        public graph(int[][] G, int[][] W) {
+        public graphTest(int[][] G, int[][] W) {
             this.G = G;
             this.W = W;
             this.Map = new vertex[G[0].length];

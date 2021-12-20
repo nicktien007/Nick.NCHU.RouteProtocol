@@ -17,6 +17,7 @@ public class OSPFMain {
 
     public static void main(String[] args)  {
 
+        //走訪並處理每個檔案
         filePaths.forEach((k, v) -> {
 
             NodesAndSwitchId nodesAndSwitchId = FileUtils.getNodesAndSwitchId(k);
@@ -24,8 +25,14 @@ public class OSPFMain {
             List<Integer> neighborIds = nodesAndSwitchId.getNeighborIds();
 
             Graph g = new Graph();
-            nodes.forEach(node -> {
 
+            //組裝 vertex, e.g:
+            // g.addVertex("5", Arrays.asList(
+            //        new Vertex("3", 300),
+            //        new Vertex("4", 150),
+            //        new Vertex("7", 150),
+            //        new Vertex("8", 175)));
+            nodes.forEach(node -> {
                 List<Vertex> vx= new ArrayList<>();
                 for (Map.Entry<Integer, Integer> entry : node.getNeighbors().entrySet()) {
                     Integer toId = entry.getKey();
@@ -39,10 +46,11 @@ public class OSPFMain {
             final String start = nodesAndSwitchId.getSwitchId().toString();
 
             final StringBuilder fileContent = new StringBuilder();
+            // 走訪start 和 end，取得最短路徑並打印匯出
             neighborIds.forEach(end -> g.getShortestPath(start, end.toString(), fileContent));
 //            System.out.println(g.getShortestPath("98", "155"));
 
-            FileUtils.writeFile(v,fileContent);
+            FileUtils.writeFile(v, fileContent);
         });
     }
 }
@@ -59,7 +67,7 @@ class NodesAndSwitchId {
 
 
     public List<Integer> getNeighborIds(){
-        return this.nodes.stream().map(x -> x.getId())
+        return this.nodes.stream().map(Node::getId)
                 .sorted(Comparator.comparing(Integer::new))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
@@ -97,11 +105,21 @@ class Node {
 
 class FileUtils{
 
+    /**
+     * 打印 並寫入StringBuilder
+     * @param s
+     * @param fileContent
+     */
     public static void printAndWriteContent(String s, StringBuilder fileContent){
         System.out.println(s);
         fileContent.append(s).append("\n");
     }
 
+    /**
+     * 寫檔
+     * @param fileName
+     * @param fileContent
+     */
     public static void writeFile(String fileName, StringBuilder fileContent){
         try (FileWriter writer = new FileWriter(fileName);
              BufferedWriter bw = new BufferedWriter(writer)) {
@@ -115,10 +133,15 @@ class FileUtils{
         fileContent.delete(0, fileContent.length());
     }
 
+    /**
+     * 解析輸入的檔案
+     * @param filePath
+     * @return Node 和 進行模擬的switch ID
+     */
     public static NodesAndSwitchId getNodesAndSwitchId(String filePath)  {
 
         int swId = 0;
-        List<Node> nodes = new LinkedList<>();
+        List<Node> nodes = new ArrayList<>();
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(filePath));
@@ -148,6 +171,9 @@ class FileUtils{
     }
 }
 
+/**
+ * 節點
+ */
 class Vertex implements Comparable<Vertex> {
 
     private String id;
@@ -224,6 +250,9 @@ class Vertex implements Comparable<Vertex> {
 
 }
 
+/**
+ * Dijkstra 算法
+ */
 class Graph {
 
     private final Map<String, List<Vertex>> vertices;
@@ -236,15 +265,24 @@ class Graph {
         this.vertices.put(character, vertex);
     }
 
-    public List<String> getShortestPath(String start, String finish, StringBuilder fileContent) {
+    /**
+     * 取得 最短路徑
+     * @param start
+     * @param end
+     * @param fileContent
+     * @return
+     */
+    public List<String> getShortestPath(String start, String end, StringBuilder fileContent) {
         final Map<String, Integer> distances = new HashMap<>();
         final Map<String, Vertex> previous = new HashMap<>();
         PriorityQueue<Vertex> nodes = new PriorityQueue<>();
 
-        if (Objects.equals(start, finish)) {
+        //處理 start 和 end 一樣的狀況
+        if (Objects.equals(start, end)) {
             FileUtils.printAndWriteContent("ID:" + start + ", next hop:" + start + ", cost:0", fileContent);
         }
 
+        //資料前處理
         for(String vertex : vertices.keySet()) {
             if (Objects.equals(vertex, start)) {
                 distances.put(vertex, 0);
@@ -256,9 +294,10 @@ class Graph {
             previous.put(vertex, null);
         }
 
+        // Dijkstra 算法
         while (!nodes.isEmpty()) {
             Vertex smallest = nodes.poll();
-            if (Objects.equals(smallest.getId(), finish)) {
+            if (Objects.equals(smallest.getId(), end)) {
                 final List<String> path = new ArrayList<>();
 
                 StringBuilder content = new StringBuilder();
@@ -268,7 +307,7 @@ class Graph {
                     path.add(smallest.getId());
 
                     //打印它
-                    if (smallest.getId().equals(finish)) {
+                    if (smallest.getId().equals(end)) {
                         content.append("ID:").append(smallest.getId()).append(", next hop:");
                         lastCost = smallest.getDistance().toString();
                     }
@@ -276,7 +315,7 @@ class Graph {
                     smallest = previous.get(smallest.getId());
                 }
 
-                if (!Objects.equals(start, finish)) {
+                if (!Objects.equals(start, end)) {
                     content.append(path.stream().reduce((x, y) -> y).orElse("---")).append(", cost:").append(lastCost);
                     FileUtils.printAndWriteContent(content.toString(), fileContent);
                 }

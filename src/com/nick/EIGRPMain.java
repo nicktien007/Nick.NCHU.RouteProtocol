@@ -14,47 +14,32 @@ public class EIGRPMain {
             {"src/com/nick/input/EIGRP_in_4.txt", "src/com/nick/output/EIGRP_out_4.txt"},
             {"src/com/nick/input/EIGRP_in_5.txt", "src/com/nick/output/EIGRP_out_5.txt"},
     }).collect(Collectors.toMap(d -> d[0], d -> d[1]));
-    private static final StringBuilder fileContent = new StringBuilder();
 
     public static void main(String[] args)  {
 
         //case 1
-//        testCase1();
+        //testCase1();
 
         //case 2
-//        testCase2();
+        //testCase2();
 
+        //走訪每一個檔案
         filePaths.forEach((k, v) -> {
-            SwitchAndEIGRP switchAndEigrps = getSwitchAndEIGRPs(k);
+            SwitchAndEIGRP switchAndEigrps = FileUtils2.getSwitchAndEIGRPs(k);
             Switch s = switchAndEigrps.getS();
             List<EIGRP> eigrps = switchAndEigrps.getEigrps();
 
-            s.sayHello();
+            final StringBuilder fileContent = new StringBuilder();
 
-            eigrps.forEach(s::received);
+            s.sayHello(fileContent);
 
-            printAndWriteContent(s.getDetail());
+            //switch 接收EIGRP封包
+            eigrps.forEach(e -> s.received(e, fileContent));
 
-            writeFile(v);
+            FileUtils2.printAndWriteContent(s.getDetail(),fileContent);
+
+            FileUtils2.writeFile(v, fileContent);
         });
-    }
-
-    private static void printAndWriteContent(String s){
-        System.out.println(s);
-        fileContent.append(s).append("\n");
-    }
-
-    private static void writeFile(String fileName){
-        try (FileWriter writer = new FileWriter(fileName);
-             BufferedWriter bw = new BufferedWriter(writer)) {
-
-            bw.write(fileContent.toString());
-
-        } catch (IOException e) {
-            System.err.format("IOException: %s%n", e);
-        }
-
-        fileContent.delete(0, fileContent.length());
     }
 
     public static void testCase1(){
@@ -73,11 +58,13 @@ public class EIGRPMain {
         neighborForEigrp.put(50, 25);
         eigrps.add(new EIGRP(12, neighborForEigrp));
 
-        s.sayHello();
+        final StringBuilder fileContent = new StringBuilder();
 
-        eigrps.forEach(s::received);
+        s.sayHello(fileContent);
 
-        printAndWriteContent(s.getDetail());
+        eigrps.forEach(e -> s.received(e, fileContent));
+
+        FileUtils2.printAndWriteContent(s.getDetail(), fileContent);
     }
 
     public static void testCase2(){
@@ -114,14 +101,54 @@ public class EIGRPMain {
         neighborForEigrp4.put(6, 175);
         eigrps.add(new EIGRP(9, neighborForEigrp4));
 
-        s.sayHello();
+        final StringBuilder fileContent = new StringBuilder();
 
-        eigrps.forEach(s::received);
+        s.sayHello(fileContent);
 
-        printAndWriteContent(s.getDetail());
+        eigrps.forEach(e -> s.received(e, fileContent));
+
+        FileUtils2.printAndWriteContent(s.getDetail(), fileContent);
+    }
+}
+
+/**
+ * 檔案管理
+ */
+class FileUtils2 {
+
+    /**
+     * 打印 並寫入StringBuilder
+     * @param s
+     * @param fileContent
+     */
+    public static void printAndWriteContent(String s, StringBuilder fileContent){
+        System.out.println(s);
+        fileContent.append(s).append("\n");
     }
 
+    /**
+     * 寫檔
+     * @param fileName
+     * @param fileContent
+     */
+    public static void writeFile(String fileName, StringBuilder fileContent){
+        try (FileWriter writer = new FileWriter(fileName);
+             BufferedWriter bw = new BufferedWriter(writer)) {
 
+            bw.write(fileContent.toString());
+
+        } catch (IOException e) {
+            System.err.format("IOException: %s%n", e);
+        }
+
+        fileContent.delete(0, fileContent.length());
+    }
+
+    /**
+     * 解析輸入的檔案
+     * @param filePath
+     * @return Node 和 進行模擬的switch ID
+     */
     public static SwitchAndEIGRP getSwitchAndEIGRPs(String filePath)  {
 
         Integer swId = 0;
@@ -170,181 +197,185 @@ public class EIGRPMain {
 
         return new SwitchAndEIGRP(new Switch(swId, new ArrayList<>(neighbors), neighbors), eigrps);
     }
+}
+
+/**
+ * Switch
+ */
+class Switch {
+
+    public Switch(Integer id, List<Neighbor> initNeighbors, List<Neighbor> neighbors) {
+        this.id = id;
+        this.neighbors = neighbors;
+        this.initNeighbors = initNeighbors;
+    }
+
+    private final Integer id;
+
+    /**
+     * 鄰居表
+     */
+    private final List<Neighbor> initNeighbors;
+    private final List<Neighbor> neighbors;
+
+    public void sayHello(StringBuilder fileContent){
+        FileUtils2.printAndWriteContent("Hello", fileContent);
+    }
 
 
-    static class Switch {
+    /**
+     * 接收EIGRP封包
+     * @param e
+     * @param fileContent
+     */
+    public void received(EIGRP e, StringBuilder fileContent){
+        updateSwitch(e ,fileContent);
+    }
 
-        public Switch(Integer id, List<Neighbor> initNeighbors, List<Neighbor> neighbors) {
-            this.id = id;
-            this.neighbors = neighbors;
-            this.initNeighbors = initNeighbors;
-        }
+    private void updateSwitch(EIGRP e, StringBuilder fileContent){
+        Map<Integer, Integer> neighbors = e.getNeighbors();
+        List<Neighbor> switchNeighbors = this.neighbors;
 
-        private final Integer id;
+        Integer receivedEIGRP_Id = e.getId();
+        Integer toNeighborCost = this.initNeighbors.stream().filter(s -> s.getId().equals(receivedEIGRP_Id)).findAny().get().getCost();
 
-        /**
-         * 鄰居表
-         */
-        private final List<Neighbor> initNeighbors;
-        private final List<Neighbor> neighbors;
+        //紀錄是否需要 hello
+        final Boolean[] isHello = {false};
 
-        public void sayHello(){
-            printAndWriteContent("Hello");
-        }
+        //走訪EIGRP 鄰居表
+        neighbors.forEach((eigrpId, eigrpCost) -> {
 
-
-        public void received(EIGRP e){
-            updateSwitch(e);
-        }
-
-        private void updateSwitch(EIGRP e){
-            Map<Integer, Integer> neighbors = e.getNeighbors();
-            List<Neighbor> switchNeighbors = this.neighbors;
-
-            Integer receivedEIGRP_Id = e.getId();
-            Integer toNeighborCost = this.initNeighbors.stream().filter(s -> s.getId().equals(receivedEIGRP_Id)).findAny().get().getCost();
-
-            final Boolean[] isHello = {false};
-
-            neighbors.forEach((eigrpId, eigrpCost) -> {
-
-                //不在switch 鄰居表，新增它
-                if (switchNeighbors.stream().noneMatch(sn -> sn.getId().equals(eigrpId))) {
-                    if (!isHello[0]) {
-                        isHello[0] = true;
-                    }
-                    switchNeighbors.add(new Neighbor(eigrpId, receivedEIGRP_Id, eigrpCost + toNeighborCost));
+            //不在switch 鄰居表，新增它
+            if (switchNeighbors.stream().noneMatch(sn -> sn.getId().equals(eigrpId))) {
+                if (!isHello[0]) {
+                    isHello[0] = true;
                 }
-
-
-                //找到成本更低的路徑，更新它
-                Integer totalEigrpCost = toNeighborCost + eigrpCost;
-                switchNeighbors.stream()
-                        .filter(sn -> sn.getId().equals(eigrpId)
-                                        && sn.getCost() > totalEigrpCost
-//                                && initNeighbors.stream().noneMatch(i->i.Id.equals(sn.Id) )
-                        )
-                        .findAny().ifPresent(sn -> {
-
-                            if (!isHello[0]) {
-                                isHello[0] = true;
-                            }
-                            sn.setCost(totalEigrpCost);
-                            sn.setNextHop(receivedEIGRP_Id);
-                        });
-
-
-            });
-
-            //先留著，似乎不需要
-//            switchNeighbors.stream().filter(x -> x.Id.equals(this.id)).forEach(x -> {
-//                x.nextHop = this.id;
-//                x.cost = 0;
-//            });
-
-
-            final Boolean isUpdate = switchNeighbors.stream().anyMatch(s -> neighbors.containsKey(s.id));
-
-            if (isUpdate && isHello[0]) {
-                printAndWriteContent("Update Hello");
+                switchNeighbors.add(new Neighbor(eigrpId, receivedEIGRP_Id, eigrpCost + toNeighborCost));
             }
-            else if(isUpdate){
-                printAndWriteContent("Update"); //通知對方更新
-            }
-            else if(isHello[0]){
-                printAndWriteContent("Hello");  //自己要更新，通知鄰居
-            }
+
+
+            //找到成本更低的路徑，更新它
+            Integer totalEigrpCost = toNeighborCost + eigrpCost;
+            switchNeighbors.stream()
+                    .filter(sn -> sn.getId().equals(eigrpId)
+                            && sn.getCost() > totalEigrpCost
+                    )
+                    .findAny().ifPresent(sn -> {
+
+                        if (!isHello[0]) {
+                            isHello[0] = true;
+                        }
+                        sn.setCost(totalEigrpCost);
+                        sn.setNextHop(receivedEIGRP_Id);
+                    });
+        });
+
+        //是否需要 update
+        final Boolean isUpdate = switchNeighbors.stream().anyMatch(s -> neighbors.containsKey(s.getId()));
+
+        printHelloAndUpdate(fileContent, isHello[0], isUpdate);
+    }
+
+    private void printHelloAndUpdate(StringBuilder fileContent, Boolean isHello, Boolean isUpdate) {
+        if (isUpdate && isHello) {
+            FileUtils2.printAndWriteContent("Update Hello", fileContent);
         }
-
-        public String getDetail() {
-            StringBuilder detail = new StringBuilder("Switch ID:" + this.id + "\n");
-            detail.append("paths:\n");
-
-            this.neighbors.stream().sorted(Comparator.comparing(Neighbor::getId))
-                    .forEach(x -> detail.append("ID:").append(x.getId())
-                            .append(", next hop:").append(x.getNextHop())
-                            .append(", cost:").append(x.getCost())
-                            .append("\n"));
-
-            return detail.toString();
+        else if(isUpdate){
+            FileUtils2.printAndWriteContent("Update", fileContent); //通知對方更新
+        }
+        else if(isHello){
+            FileUtils2.printAndWriteContent("Hello", fileContent);  //自己要更新，通知鄰居
         }
     }
 
-    static class Neighbor{
+    public String getDetail() {
+        StringBuilder detail = new StringBuilder("Switch ID:" + this.id + "\n");
+        detail.append("paths:\n");
 
-        public Neighbor(Integer id, Integer nextHop, Integer cost) {
-            this.id = id;
-            this.nextHop = nextHop;
-            this.cost = cost;
-        }
+        this.neighbors.stream().sorted(Comparator.comparing(Neighbor::getId))
+                .forEach(x -> detail.append("ID:").append(x.getId())
+                        .append(", next hop:").append(x.getNextHop())
+                        .append(", cost:").append(x.getCost())
+                        .append("\n"));
 
-        private Integer id;
+        return detail.toString();
+    }
+}
 
-        private Integer nextHop;
-        private Integer cost;
+class Neighbor{
 
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
-        }
-
-        public Integer getNextHop() {
-            return nextHop;
-        }
-
-        public void setNextHop(Integer nextHop) {
-            this.nextHop = nextHop;
-        }
-
-        public Integer getCost() {
-            return cost;
-        }
-
-        public void setCost(Integer cost) {
-            this.cost = cost;
-        }
+    public Neighbor(Integer id, Integer nextHop, Integer cost) {
+        this.id = id;
+        this.nextHop = nextHop;
+        this.cost = cost;
     }
 
-    static class EIGRP {
-        public EIGRP(Integer id, Map<Integer, Integer> neighbors) {
-            this.id = id;
-            this.neighbors = neighbors;
-        }
+    private Integer id;
 
-        private final Integer id;
+    private Integer nextHop;
+    private Integer cost;
 
-        /**
-         * 鄰居表 K:switchID, V:cost
-         */
-        private final Map<Integer, Integer> neighbors;
-
-        public Integer getId() {
-            return id;
-        }
-
-        public Map<Integer, Integer> getNeighbors() {
-            return neighbors;
-        }
+    public Integer getId() {
+        return id;
     }
 
-    static class SwitchAndEIGRP {
-        public SwitchAndEIGRP(Switch s, List<EIGRP> eigrps) {
-            this.s = s;
-            this.eigrps = eigrps;
-        }
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-        private final Switch s;
-        private final List<EIGRP> eigrps;
+    public Integer getNextHop() {
+        return nextHop;
+    }
 
-        public Switch getS() {
-            return s;
-        }
+    public void setNextHop(Integer nextHop) {
+        this.nextHop = nextHop;
+    }
 
-        public List<EIGRP> getEigrps() {
-            return eigrps;
-        }
+    public Integer getCost() {
+        return cost;
+    }
+
+    public void setCost(Integer cost) {
+        this.cost = cost;
+    }
+}
+
+class EIGRP {
+    public EIGRP(Integer id, Map<Integer, Integer> neighbors) {
+        this.id = id;
+        this.neighbors = neighbors;
+    }
+
+    private final Integer id;
+
+    /**
+     * 鄰居表 K:switchID, V:cost
+     */
+    private final Map<Integer, Integer> neighbors;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public Map<Integer, Integer> getNeighbors() {
+        return neighbors;
+    }
+}
+
+class SwitchAndEIGRP {
+    public SwitchAndEIGRP(Switch s, List<EIGRP> eigrps) {
+        this.s = s;
+        this.eigrps = eigrps;
+    }
+
+    private final Switch s;
+    private final List<EIGRP> eigrps;
+
+    public Switch getS() {
+        return s;
+    }
+
+    public List<EIGRP> getEigrps() {
+        return eigrps;
     }
 }

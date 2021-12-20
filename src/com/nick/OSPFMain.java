@@ -20,7 +20,7 @@ public class OSPFMain {
         //走訪並處理每個檔案
         filePaths.forEach((k, v) -> {
 
-            NodesAndSwitchId nodesAndSwitchId = FileUtils.getNodesAndSwitchId(k);
+            NodesAndSwitchId nodesAndSwitchId = FileUtils3.getNodesAndSwitchId(k);
             List<Node> nodes = nodesAndSwitchId.getNodes();
             List<Integer> neighborIds = nodesAndSwitchId.getNeighborIds();
 
@@ -50,7 +50,7 @@ public class OSPFMain {
             neighborIds.forEach(end -> g.getShortestPath(start, end.toString(), fileContent));
 //            System.out.println(g.getShortestPath("98", "155"));
 
-            FileUtils.writeFile(v, fileContent);
+            FileUtils3.writeFile(v, fileContent);
         });
     }
 }
@@ -103,7 +103,7 @@ class Node {
     }
 }
 
-class FileUtils{
+class FileUtils3 {
 
     /**
      * 打印 並寫入StringBuilder
@@ -279,7 +279,7 @@ class Graph {
 
         //處理 start 和 end 一樣的狀況
         if (Objects.equals(start, end)) {
-            FileUtils.printAndWriteContent("ID:" + start + ", next hop:" + start + ", cost:0", fileContent);
+            FileUtils3.printAndWriteContent("ID:" + start + ", next hop:" + start + ", cost:0", fileContent);
         }
 
         //資料前處理
@@ -317,7 +317,7 @@ class Graph {
 
                 if (!Objects.equals(start, end)) {
                     content.append(path.stream().reduce((x, y) -> y).orElse("---")).append(", cost:").append(lastCost);
-                    FileUtils.printAndWriteContent(content.toString(), fileContent);
+                    FileUtils3.printAndWriteContent(content.toString(), fileContent);
                 }
 
                 return path;

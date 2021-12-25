@@ -16,6 +16,8 @@ public class OSPFMain {
     }).collect(Collectors.toMap(d -> d[0], d -> d[1]));
 
     public static void main(String[] args)  {
+        Long startTime = System.currentTimeMillis();
+
 
         //走訪並處理每個檔案
         filePaths.forEach((k, v) -> {
@@ -52,6 +54,10 @@ public class OSPFMain {
 
             FileUtils3.writeFile(v, fileContent);
         });
+
+        Long endTime = System.currentTimeMillis();
+        Long elapsedTime = (endTime - startTime);
+        System.out.println("該段總共耗時：" + elapsedTime + "ms");
     }
 }
 
